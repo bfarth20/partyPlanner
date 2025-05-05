@@ -6,6 +6,8 @@ const API =
 // State
 let parties = [];
 let selectedParty;
+let guests = [];
+let rsvps = [];
 
 //updates state with all parties from the API
 async function getParties() {
@@ -19,15 +21,44 @@ async function getParties() {
   }
 }
 
+//EXTRA CREDIT TO GRAB GUESTS AND RSVPs
+async function getGuests() {
+  try {
+    const response = await fetch(
+      "https://fsa-crud-2aa9294fe819.herokuapp.com/api/2504-FTB-ET-WEB-FT/guests"
+    );
+    const json = await response.json();
+    guests = json.data;
+  } catch (err) {
+    console.error("Failed to fetch guests", err);
+  }
+}
+
 //Updates state with a single party from the API
 async function getParty(id) {
   try {
     const response = await fetch(`${API}/${id}`);
     const json = await response.json();
     selectedParty = json.data;
-    render();
-  } catch (error) {
-    console.error("Failed to fetch party details:", error);
+
+    await getGuests();
+    await getRSVPs();
+
+    render(); // re-render to show everything
+  } catch (err) {
+    console.error("Failed to fetch party", err);
+  }
+}
+
+async function getRSVPs() {
+  try {
+    const response = await fetch(
+      "https://fsa-crud-2aa9294fe819.herokuapp.com/api/2504-FTB-ET-WEB-FT/rsvps"
+    );
+    const json = await response.json();
+    rsvps = json.data;
+  } catch (err) {
+    console.error("Failed to fetch RSVPs", err);
   }
 }
 
@@ -89,12 +120,35 @@ function PartyDetails() {
   const location = document.createElement("p");
   location.textContent = `Location: ${selectedParty.location}`;
 
+  const rsvpList = document.createElement("ul");
+  rsvpList.textContent = "Guests:";
+
+  const partyRSVPs = rsvps.filter(
+    (rsvp) => Number(rsvp.eventId) === Number(selectedParty.id)
+  );
+
+  const guestList = guests.filter((guest) =>
+    partyRSVPs.some((rsvp) => Number(rsvp.guestId) === Number(guest.id))
+  );
+
+  guestList.forEach((guest) => {
+    const li = document.createElement("li");
+    li.textContent = `${guest.name} (${guest.email})`;
+    rsvpList.appendChild(li);
+  });
+
   section.appendChild(heading);
   section.appendChild(id);
   section.appendChild(date);
   section.appendChild(description);
   section.appendChild(location);
+  section.appendChild(rsvpList);
 
+  console.log("RSVPs:", rsvps);
+  console.log("Guests:", guests);
+  console.log("Party ID:", selectedParty.id);
+  console.log("Matching RSVPs:", partyRSVPs);
+  console.log("Matching Guests:", guestList);
   return section;
 }
 
@@ -124,4 +178,10 @@ function render() {
   const details = PartyDetails(); // Shows selected party info
   app.appendChild(details);
 }
-getParties();
+async function init() {
+  await getRSVPs();
+  await getGuests();
+  await getParties();
+}
+
+init();
