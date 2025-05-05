@@ -144,11 +144,6 @@ function PartyDetails() {
   section.appendChild(location);
   section.appendChild(rsvpList);
 
-  console.log("RSVPs:", rsvps);
-  console.log("Guests:", guests);
-  console.log("Party ID:", selectedParty.id);
-  console.log("Matching RSVPs:", partyRSVPs);
-  console.log("Matching Guests:", guestList);
   return section;
 }
 
